@@ -134,7 +134,8 @@ public abstract class KeeperException extends Exception {
                 return new SessionMovedException();
             case NOTREADONLY:
                 return new NotReadOnlyException();
-
+            case SESSIONCLOSEDREQUIRESASLAUTH:
+                return new SessionClosedRequireAuthException();
             case OK:
             default:
                 throw new IllegalArgumentException("Invalid exception code");
@@ -318,7 +319,7 @@ public abstract class KeeperException extends Exception {
         OPERATIONTIMEOUT (OperationTimeout),
         /** Invalid arguments */
         BADARGUMENTS (BadArguments),
-        
+
         /** API errors.
          * This is never thrown by the server, it shouldn't be used other than
          * to indicate a range. Specifically error codes greater than this
@@ -350,10 +351,12 @@ public abstract class KeeperException extends Exception {
         /** Session moved to another server, so operation is ignored */
         SESSIONMOVED (-118),
         /** State-changing request is passed to read-only server */
-        NOTREADONLY (-119);
+        NOTREADONLY (-119),
+        /** sasl */
+        SESSIONCLOSEDREQUIRESASLAUTH (-120);
 
         private static final Map<Integer,Code> lookup
-            = new HashMap<Integer,Code>();
+                = new HashMap<Integer,Code>();
 
         static {
             for(Code c : EnumSet.allOf(Code.class))
@@ -427,6 +430,8 @@ public abstract class KeeperException extends Exception {
                 return "Session moved";
             case NOTREADONLY:
                 return "Not a read-only call";
+            case SESSIONCLOSEDREQUIRESASLAUTH:
+                return "Session closed because client failed to authenticate";
             default:
                 return "Unknown error " + code;
         }
@@ -723,6 +728,17 @@ public abstract class KeeperException extends Exception {
     public static class UnimplementedException extends KeeperException {
         public UnimplementedException() {
             super(Code.UNIMPLEMENTED);
+        }
+    }
+
+    /**
+     * @see Code#SESSIONCLOSEDREQUIRESASLAUTH
+     */
+    @InterfaceAudience.Public
+    public static class SessionClosedRequireAuthException extends KeeperException {
+        public SessionClosedRequireAuthException() { super(Code.SESSIONCLOSEDREQUIRESASLAUTH); }
+        public SessionClosedRequireAuthException(String path) {
+            super(Code.SESSIONCLOSEDREQUIRESASLAUTH, path);
         }
     }
 }
